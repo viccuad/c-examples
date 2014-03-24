@@ -4,7 +4,7 @@
 
 #include <stdlib.h>		// malloc(), realloc
 #include <stdio.h>		// printf
-#include <string.h>		// strlen, strcpy, strcmp 
+#include <string.h>		// strlen, strcpy, strcmp
 #include <unistd.h>		// environ
 #include "entorno_lib.h"// contiene el struct varslot simbolos[MAXVAR]
 
@@ -13,10 +13,10 @@ extern char **environ;
 
 /**
  * usar como funcion "privada"
- * recorre el struct varslot simbolos que contiene las variables de entorno de 
- * nuestra shell, buscando la variable de nombre "nombre". Si la encuentra, se 
+ * recorre el struct varslot simbolos que contiene las variables de entorno de
+ * nuestra shell, buscando la variable de nombre "nombre". Si la encuentra, se
  * para y devuelve la pos, si no devuelve NULL.
- * 
+ *
  * @param  nombre 		nombre de la variable a buscar
  * @return        		pos de la var "nombre", NULL si no la encuentra
 */
@@ -38,9 +38,9 @@ static struct varslot *hallar(char *nombre) {
 
 /**
  * usar como funcion "privada"
- * Dado un array de strings, asigna un string a una posicion de ese array, 
+ * Dado un array de strings, asigna un string a una posicion de ese array,
  * reservando la memoria necesaria. Si no puede alocar memoria, devuelve false.
- * 
+ *
  * @param  p 		array de strings
  * @param  s 		strings
  * @return  		TRUE si ha podido asignar, FALSE si no puede alocar memoria
@@ -60,11 +60,11 @@ static BOOL asignar(char **p, char *s) {
 
 
 /**
- * Recibe una variable y su valor. Comprueba si no esta presente ya, y si no es 
+ * Recibe una variable y su valor. Comprueba si no esta presente ya, y si no es
  * así la asigna.
- * 
- * @param  nombre 
- * @param  valor  
+ *
+ * @param  nombre
+ * @param  valor
  * @return        TRUE si éxito, FALSE si la variable ya existe o eoc
  */
 BOOL EVasignar(char *nombre, char *valor) {
@@ -77,11 +77,11 @@ BOOL EVasignar(char *nombre, char *valor) {
 
 
 /**
- * Recibe una variable y su valor. Comprueba si no esta presente ya, y si no es 
- * así la asigna, con valor vacío, y la marca como exportada														
- * 
+ * Recibe una variable y su valor. Comprueba si no esta presente ya, y si no es
+ * así la asigna, con valor vacío, y la marca como exportada
+ *
  * 																		//TODO mi no entender para q es esto! ¿que diferencia hay con EVasignar ademas de q la marca como exportada??
- * @param  nombre 
+ * @param  nombre
  * @return        TRUE si éxito, FALSE si la variable ya existe o eoc
  */
 BOOL EVexportar(char *nombre) {
@@ -99,7 +99,7 @@ BOOL EVexportar(char *nombre) {
 /**
  * Devuelve el valor de una variable
  * 																		//TODO mi no entender para q es esto! ¿que diferencia hay con EVasignar ademas de q la marca como exportada??
- * @param  nombre 
+ * @param  nombre
  * @return        valor de variable o NULL si no está
  */
 char *EVobtener(char *nombre) {
@@ -113,10 +113,10 @@ char *EVobtener(char *nombre) {
 
 /**
  * Recibe un array de variables entorno y las exporta a nuestra shell
- * 
- * @param  entorno 		array de variables de entorno del programa 
+ *
+ * @param  entorno 		array de variables de entorno del programa
  * @return         		TRUE si tiene éxito, FALSE eoc
- */	
+ */
 BOOL EViniciar(char **entorno) {
 	int i, tam_nombre;
 	char nombre[256];	// problemas con dimensiones de nombre[]
@@ -134,11 +134,11 @@ BOOL EViniciar(char **entorno) {
 
 
 /**
- * Actualiza environ según las variables marcadas como exportables en "simbolos" 
+ * Actualiza environ según las variables marcadas como exportables en "simbolos"
  *
  * (se suele llamar al hacer hijos)
  *
- * @param  
+ * @param
  * @return         		TRUE si tiene éxito, FALSE si no puede reservar memoria al hacer malloc o realloc
  */
 BOOL EVactualizar(void) {
@@ -148,7 +148,7 @@ BOOL EVactualizar(void) {
 	static BOOL actualizado = FALSE;
 
 	if (!actualizado)
-		if  ((environ = (char**)malloc((MAXVAR+1)*sizeof(char *))) == NULL)
+		if ((environ = (char**)malloc((MAXVAR+1)*sizeof(char *))) == NULL)
 			return FALSE;
 	envi = 0;
 	for (i=0; i<MAXVAR; i++) {

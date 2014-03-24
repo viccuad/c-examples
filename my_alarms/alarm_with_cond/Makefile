@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS=-Wall -g
-LFLAGS=-g -lpthread 
+LFLAGS=-g -lpthread
 
 PROG=Alarm_with_cond
 OBJPROG=alarma_cond.o alarma_thread.o alarma_inserta.o

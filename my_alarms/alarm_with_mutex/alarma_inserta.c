@@ -1,11 +1,11 @@
 #include "alarma.h"
- 
+
 extern alarma_t *alarma_lista;
 
 void alarma_inserta(alarma_t *alarma) {
 	alarma_t **ultima, *sigue;
 	/*
-	 * Inserta la nueva alarma en la lista de alarmas 
+	 * Inserta la nueva alarma en la lista de alarmas
 	 * ordenadas por tiempo de expiracion.
 	 */
 	ultima = &alarma_lista;
@@ -20,9 +20,9 @@ void alarma_inserta(alarma_t *alarma) {
 		sigue = sigue->enlace;
 	}
 	/*
-	 * Si alcanza el final de la lista, inserta la nueva 
-	 * alarma alli. ("sigue" es NULL, y "ultima" apunta  
-	 * al campo "enlace" de la ultima entrada, o a la 
+	 * Si alcanza el final de la lista, inserta la nueva
+	 * alarma alli. ("sigue" es NULL, y "ultima" apunta
+	 * al campo "enlace" de la ultima entrada, o a la
 	 * cabecera de la lista).
 	 */
 	if (sigue == NULL) {

@@ -11,32 +11,32 @@ extern int fin_solicitado;
 
 void *alarma_thread (void *arg)
 {
-    alarma_t *alarma;
-    int tiempo_espera;
-    time_t ahora;
-    int estado;
+	alarma_t *alarma;
+	int tiempo_espera;
+	time_t ahora;
+	int estado;
 
-    /* 
-     * Itera continuamente procesando solicitudes. El thread
-     * desaparecera cuando el proceso termine.
-     */
-    while (1) {
+	/*
+	* Itera continuamente procesando solicitudes. El thread
+	* desaparecera cuando el proceso termine.
+	*/
+	while (1) {
 
 		if (fin_solicitado == 1 && alarma_lista == NULL) {
 			pthread_exit(NULL);
 		}
-		
+
 		// dentro de una seccion critica
 		if ((estado = pthread_mutex_lock(&alarma_mutex)) != 0)
 			err_abort(estado, "Lock hilo gestor\n");
 
-	    /* 
-	     * Si la lista de alarmas esta vacia, espera durante un segundo.
-	     * Esto permite que el thread principal se ejecute y pueda admitir 
-	     * otra solicitud. Si la lista no esta vacia, retira la primera entrada 
-	     * Calcula el numero de segundos que debe esperar -- si el resultado 
-	     * es menor que 0 (el tiempo ya ha pasado), pone el tiempo_espera a 0. 
-	     */
+		/*
+		* Si la lista de alarmas esta vacia, espera durante un segundo.
+		* Esto permite que el thread principal se ejecute y pueda admitir
+		* otra solicitud. Si la lista no esta vacia, retira la primera entrada
+		* Calcula el numero de segundos que debe esperar -- si el resultado
+		* es menor que 0 (el tiempo ya ha pasado), pone el tiempo_espera a 0.
+		*/
 		alarma = alarma_lista; // me cojo la primera
 		if (alarma_lista == NULL) // no hay alarmas
 			tiempo_espera = 1; // asi que permite que thread ppal se ejecute
@@ -56,13 +56,13 @@ void *alarma_thread (void *arg)
 				(int)(alarma->tiempo - time(NULL)), alarma->mensaje);
 			fprintf (stderr, "\n");
 		#endif
-	 
-		/* 
-		 * Desbloquea (unlock) el mutex antes de pasar a esperar de modo que el 
-		 * thread principal pueda bloquearlo (lock) para insertar una nueva 
-		 * solicitud. Si el tiempo_espera es 0, invoca a sched_yield, dando 
-		 * al thread principal una oportunidad de ejecutarse si ha recibido 
-		 * entrada del usuario, y sin demorar el mensaje en caso de que no haya 
+
+		/*
+		 * Desbloquea (unlock) el mutex antes de pasar a esperar de modo que el
+		 * thread principal pueda bloquearlo (lock) para insertar una nueva
+		 * solicitud. Si el tiempo_espera es 0, invoca a sched_yield, dando
+		 * al thread principal una oportunidad de ejecutarse si ha recibido
+		 * entrada del usuario, y sin demorar el mensaje en caso de que no haya
 		 * recibido entrada.
 		 */
 		if ((estado = pthread_mutex_unlock(&alarma_mutex)) != 0)  // fin seccion critica
@@ -71,13 +71,13 @@ void *alarma_thread (void *arg)
 			sched_yield();
 		else
 			sleep(tiempo_espera);
-		/* 
+		/*
 		 * Si ha expirado una alarma, imprime el mensaje y libera la estructura
 		 */
 		if (alarma != NULL) {
 			printf("(%d) %s\n", alarma->segundos, alarma->mensaje);
 			free (alarma);
-		}	
+		}
 	}
 }
 

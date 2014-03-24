@@ -5,15 +5,15 @@ extern pthread_cond_t alarma_cond;
 extern alarma_t *alarma_lista;
 extern time_t alarma_actual;
 
-/* 
- * Esta rutina requiere que el invocador haya 
+/*
+ * Esta rutina requiere que el invocador haya
  * bloqueado (LOCKED) el alarma_mutex.
  */
 void alarma_inserta(alarma_t *alarma) {
 	int estado;
 	alarma_t **ultima, *sigue;
 	/*
-	 * Inserta la nueva alarma en la lista de alarmas 
+	 * Inserta la nueva alarma en la lista de alarmas
 	 * ordenadas por tiempo de expiracion.
 	 */
 	ultima = &alarma_lista;
@@ -28,9 +28,9 @@ void alarma_inserta(alarma_t *alarma) {
 		sigue = sigue->enlace;
 	}
 	/*
-	 * Si alcanza el final de la lista, inserta la nueva 
-	 * alarma alli. ("sigue" es NULL, y "ultima" apunta  
-	 * al campo "enlace" de la ultima entrada, o a la 
+	 * Si alcanza el final de la lista, inserta la nueva
+	 * alarma alli. ("sigue" es NULL, y "ultima" apunta
+	 * al campo "enlace" de la ultima entrada, o a la
 	 * cabecera de la lista).
 	 */
 	if (sigue == NULL) {
@@ -47,7 +47,7 @@ void alarma_inserta(alarma_t *alarma) {
 
 	/* CODIGO
 	 * Despierta a alarma_thread si no esta ocupado (es decir,
-	 * si alarma_actual es 0, lo que indica que esta esperando 
+	 * si alarma_actual es 0, lo que indica que esta esperando
 	 * trabajo), o si la nueva alarma va antes que la que esta
 	 * siendo actualmente atendida por alarma_thread.
 	 */

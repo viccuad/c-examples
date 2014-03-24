@@ -3,7 +3,7 @@
  *
  * Esta es una mejora del programa alarma_mutex.c, que
  * introduce una variable de condicion con espera temporizada
- * para permitir interrumpir una alarma en curso cuando se solicita 
+ * para permitir interrumpir una alarma en curso cuando se solicita
  * una a larma mas urgente.
  */
 
@@ -20,35 +20,34 @@ int fin_solicitado = 0;
 
 int main(int argc, char *argv[])
 {
-    int estado;
-    char linea[128];
-    alarma_t *alarma;
-    pthread_t thread;
+	int estado;
+	char linea[128];
+	alarma_t *alarma;
+	pthread_t thread;
 
+	setbuf(stdin, NULL);
 
-    setbuf(stdin, NULL);
-
-    // crea el thread que procesa las alarmas
+	// crea el thread que procesa las alarmas
 	if ((estado = pthread_create(&thread, NULL, alarma_thread, NULL)) != 0)
 		err_abort(estado, "Creacion del thread alarma\n");
 
-    while (1) {
-        printf ("Alarma> ");
-        if (fgets(linea, sizeof (linea), stdin) == NULL) break;
-        if (strlen (linea) <= 1) continue;
-        if (!isatty(0)) printf("%s", linea);
+	while (1) {
+		printf ("Alarma> ");
+		if (fgets(linea, sizeof (linea), stdin) == NULL) break;
+		if (strlen (linea) <= 1) continue;
+		if (!isatty(0)) printf("%s", linea);
 
-        alarma = (alarma_t*)malloc(sizeof (alarma_t));
-        if (alarma == NULL) errno_abort("malloc alarm");
+		alarma = (alarma_t*)malloc(sizeof (alarma_t));
+		if (alarma == NULL) errno_abort("malloc alarm");
 
-        /*
-         * Divide la linea de entrada en segundos (%d) y un mensaje
-         * (%64[^\n]), consistente en hasta 64 caracteres
-         * separados de los segundos por espacios.
-         */
-        if (sscanf (linea, "%d %64[^\n]", &alarma->segundos, alarma->mensaje) < 2) {
+		/*
+		 * Divide la linea de entrada en segundos (%d) y un mensaje
+		 * (%64[^\n]), consistente en hasta 64 caracteres
+		 * separados de los segundos por espacios.
+		 */
+		if (sscanf (linea, "%d %64[^\n]", &alarma->segundos, alarma->mensaje) < 2) {
 			if (strcmp(linea, "exit\n") == 0) {
-   				fin_solicitado = 1;
+				fin_solicitado = 1;
 				if (alarma_actual == 0) {
 					if ((estado = pthread_cond_signal(&alarma_cond)) != 0)
 						err_abort(estado, "Fallo de join\n");
@@ -59,14 +58,14 @@ int main(int argc, char *argv[])
 					printf("FIN\n");
 					pthread_cond_destroy(&alarma_cond);
 					pthread_mutex_destroy(&alarma_mutex);
-   					pthread_exit(NULL);
+					pthread_exit(NULL);
 				}
 			}
 			else {
 				warnx("Entrada erronea\n");
-		        free (alarma);
+			free (alarma);
 			}
-        }
+		}
 		else {
 
 			// inserta la alarma en la lista, dentro de una seccion critica
@@ -79,8 +78,7 @@ int main(int argc, char *argv[])
 
 			if ((estado = pthread_mutex_unlock(&alarma_mutex)) != 0) // fin seccion critica
 				err_abort(estado, "Unlock hilo inicial\n");
-
-        }
-    }
+		}
+	}
 	pthread_exit(NULL);
 }

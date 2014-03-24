@@ -1,8 +1,3 @@
-/*
- ESTE DOCUMENTO ESTA HECHO PARA VERLO CON TAB SIZE = 4
- */
-
-
 #include <unistd.h>			// lseek(), close(), chdir(), fork(), pipe()
 #include <stdlib.h>			// exit(), malloc(), free()
 #include <stdio.h>			// getchar(), ungetc(), printf(), stdin
@@ -20,27 +15,27 @@
 #define MAXARG 20
 #define MAXFNAME 500
 #define MAXPALABRA 500
-#define MAXJOBS 50 			
+#define MAXJOBS 50
 
-static FILE *pilaF[10], *fd_actual, *fperfil, *fguion;							
-static int npilaF=0;  
+static FILE *pilaF[10], *fd_actual, *fperfil, *fguion;
+static int npilaF=0;
 static int ultimo_estado;
 
-static int trabajos[MAXJOBS];  
-static int numTrabajos = 0; 
+static int trabajos[MAXJOBS];
+static int numTrabajos = 0;
 
 typedef enum {T_PALABRA, T_AMP, T_PYC, T_MYRQ, T_MYRQ2, T_MNRQ, T_NL, T_EOF,
-				T_AMP2, T_OR, T_OR2} TOKEN ; 
-static BOOL ejecutar = TRUE; //manda ejecutar el 2º comando	
+				T_AMP2, T_OR, T_OR2} TOKEN ;
+static BOOL ejecutar = TRUE; //manda ejecutar el 2º comando
 static TOKEN obtener_token(char *palabra);
 static TOKEN comando(int *waitpid);
-static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent, 
+static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent,
 		int fd_sal, char *fichero_sal, BOOL anexo, BOOL background);
-static void redirigir(int fd_ent, char *fichero_ent, int fd_sal, char *fichero_sal, 
+static void redirigir(int fd_ent, char *fichero_ent, int fd_sal, char *fichero_sal,
 		BOOL anexo, BOOL background);
 static int esperar_a(int pid);
 static BOOL internos(int argc, char *argv[], int fd_ent, int fd_sal);
-static void quitar_job(int pid); 	
+static void quitar_job(int pid);
 
 #ifndef TEST_TOKEN
 int main(int argc, char *argv[], char *envp[]) {
@@ -64,7 +59,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 		pilaF[npilaF++] = fguion;
 	}
-	fd_actual=pilaF[npilaF-1];												
+	fd_actual=pilaF[npilaF-1];
 
 	// Ignorar señales provocadas desde el terminal:
 	ignorarsigs();
@@ -72,13 +67,13 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Importar las variables de entorno del programa shell_np (obtenidas desde bash) dentro de nuestra shell:
 	if (!EViniciar(envp))
 		err(1,"No puede inicializar el entorno");
-	
+
 	// Preparar el “prompt” o “solicitud de entrada de orden”:
 	if ((prompt = EVobtener("PS2")) == NULL)
 		prompt = "> ";
 	if (isatty(fileno(fd_actual)))						// es una tty: nos ponemos en modo interactivo
 		printf("%s %s", EVobtener("PWD"),prompt);
-	
+
 	/*  CICLO BASICO (repetir continuamente):
 		Mostrar el “prompt”, si procede
 		Obtener una orden
@@ -103,7 +98,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 static TOKEN obtener_token(char *palabra) {
 	enum {NEUTRAL, MAYOR2, COMILLAS, PALABRA,
-			AMP2, OR2} estado = NEUTRAL; 	
+			AMP2, OR2} estado = NEUTRAL;
 	int c;
 	char *pal;
 
@@ -134,7 +129,7 @@ static TOKEN obtener_token(char *palabra) {
 			ungetc(c, fd_actual);
 			return T_MYRQ;
 
-		
+
 		case AMP2:
 			if (c == '&') return T_AMP2;
 			ungetc(c, fd_actual);
@@ -143,7 +138,7 @@ static TOKEN obtener_token(char *palabra) {
 			if (c == '|') return T_OR2;
 			ungetc(c, fd_actual);
 			return T_OR;
-		
+
 
 		case COMILLAS:
 			switch (c) {
@@ -182,13 +177,13 @@ static TOKEN comando(int *p_pid) {
 	char palabra[MAXPALABRA];
 	BOOL anexo;     															// para concatenar al redirigir entradas
 	argc = fd_ent = 0; fd_sal = 1;
-	
+
 	BOOL background;
 	anexo = FALSE;
 	background = FALSE;
 
 
-		
+
 	while (TRUE) {
 		switch (token = obtener_token(palabra)) {
 		case T_PALABRA:
@@ -197,7 +192,7 @@ static TOKEN comando(int *p_pid) {
 			// copiamos la palabra al argv[]
 			if (argc < MAXARG+1){ 												// comprobar que no nos pasamos de num de args
 				// Reservamos el espacio para la variable
-				argv[argc] = (char*) calloc(sizeof(char), strlen(palabra)+1);	// se hace free al saltar de linea (T_NL)			
+				argv[argc] = (char*) calloc(sizeof(char), strlen(palabra)+1);	// se hace free al saltar de linea (T_NL)
 				strcpy(argv[argc], palabra);
 				// Incremento del número de argumentos
 				argc++;
@@ -222,7 +217,7 @@ static TOKEN comando(int *p_pid) {
 		case T_MYRQ2:
 			/* Prepara la redireccion de salida estandar */
 
-			if (token== T_MYRQ2) anexo = TRUE;										
+			if (token== T_MYRQ2) anexo = TRUE;
 			// leer el siguiente token, que contendra el arg fichero de salida
 			token = obtener_token(fichero_sal);
 			// Cambiar el descriptor de salida por el del fichero_sal
@@ -240,18 +235,18 @@ static TOKEN comando(int *p_pid) {
 			background = TRUE;  // recibimos &, se ejecutará en background
 		case T_AMP2:
 			/* Finaliza la recogida de argumentos */
-			argv[argc] = NULL; 
+			argv[argc] = NULL;
 			/* Manda ejecutar el comando recopilado y devuelve el pid del proceso mandado ejecutar */
-			if (argc > 0) 	 
-				pid = invocar(argc,argv,fd_ent,fichero_ent,fd_sal,fichero_sal,anexo,background);			
+			if (argc > 0)
+				pid = invocar(argc,argv,fd_ent,fichero_ent,fd_sal,fichero_sal,anexo,background);
 			p_pid = &pid; 														// apuntamos a la dir, para usarlo como un puntero
 			if (pid != 0) //error al ejecutar
-				ejecutar = FALSE;		 	 
+				ejecutar = FALSE;
 			else
 			    ejecutar = TRUE;
-			argv[0] = NULL; 
+			argv[0] = NULL;
 			argc = 0;
-			
+
 			continue;
 		case T_OR2:
 		case T_OR:
@@ -263,22 +258,22 @@ static TOKEN comando(int *p_pid) {
 			/* Libera memoria */
 
 			/* Finaliza la recogida de argumentos */
-			argv[argc] = NULL;  						
+			argv[argc] = NULL;
 
 			/* Manda ejecutar el comando recopilado y devuelve el pid del proceso mandado ejecutar */
-			if (argc > 0 
-				&& ejecutar) 	 
+			if (argc > 0
+				&& ejecutar)
 				{
-				*p_pid = invocar(argc,argv,fd_ent,fichero_ent,fd_sal,fichero_sal,anexo,background);			
-				/* Libera memoria */	
-				// http://stackoverflow.com/questions/14746053/free-all-arguments-in-variadic-function-c		
+				*p_pid = invocar(argc,argv,fd_ent,fichero_ent,fd_sal,fichero_sal,anexo,background);
+				/* Libera memoria */
+				// http://stackoverflow.com/questions/14746053/free-all-arguments-in-variadic-function-c
 				//argv es un array de strings, por definicion, tiene q acabar en NULL
 				int i;
 				for(i = 0; i< argc; i++){
 					free(argv[i]);												// liberar cada string del array
 				}
 				argv[0]=NULL;													// por definicion, debe acabar en NULL
-				anexo = FALSE;	  														
+				anexo = FALSE;
 				ejecutar = TRUE;
 			}
 			return token;
@@ -288,36 +283,36 @@ static TOKEN comando(int *p_pid) {
 
 
 
-static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent, 
+static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent,
 		int fd_sal, char *fichero_sal, BOOL anexo, BOOL background) {
 	int pid, i;
 	char *s;
 
-		
+
 	pid = 0;
-	if ( internos(argc,argv,fd_ent,fd_sal) == FALSE ){							// si es interno, lo ejecutamos		
+	if ( internos(argc,argv,fd_ent,fd_sal) == FALSE ){							// si es interno, lo ejecutamos
 		// comando externo, creamos un hijo para el nuevo proceso asociado al comando a ejecutar
 		pid = fork();
-		
-		if (pid == -1)				
+
+		if (pid == -1)
 			perror("Error: internos() fork");
 		else if (pid == 0){		/************** código del hijo ***************/
-			
+
 			/* expansion de variables: $var */
-			int i;			
-			for(i = 0; i < argc ; i++) {								
-				if ( argv[i][0] == '$' ){										// si el comando empieza por $, es variable a expandir			
-					char *aux = malloc (sizeof(char) * (strlen(argv[i]) -1));	
+			int i;
+			for(i = 0; i < argc ; i++) {
+				if ( argv[i][0] == '$' ){										// si el comando empieza por $, es variable a expandir
+					char *aux = malloc (sizeof(char) * (strlen(argv[i]) -1));
 					// extraer la variable de "$variable"
 					strcpy(aux, argv[i]+1);									// copiamos $var quitándole "$"
 					if(EVobtener(aux) != NULL){
 						argv[i] = realloc(argv[i], sizeof(char) *(strlen(EVobtener(aux)) ));
 						strcpy(argv[i], EVobtener(aux));
-						free(aux);	
+						free(aux);
 					}
-				}			
+				}
 			}
-			// preparar señales para que se puede interrumpir si esta en fg 
+			// preparar señales para que se puede interrumpir si esta en fg
 			if (background == FALSE)
 				reponersigs();
 			else ignorarsigs();   												//en background no le llegan señales (podría sobrar ya que aún no se ha llamado a reponersigs())
@@ -327,21 +322,21 @@ static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent,
 			//redirecciones
 			redirigir(fd_ent,fichero_ent,fd_sal,fichero_sal,anexo,background);
 			//ejecución
-			if (execvp(argv[0],argv) == -1)										// ejecuta argv[0]  
-			 	perror("Error execvp()");										// si hay error,exec da valor a errno. con perror se ve errno.
-		}											
+			if (execvp(argv[0],argv) == -1)										// ejecuta argv[0]
+				perror("Error execvp()");										// si hay error,exec da valor a errno. con perror se ve errno.
+		}
 		else if (pid>0){		/************** código del padre **************/
 
 			if (background == FALSE){
 				//esperar al hijo
-				pid = esperar_a(pid);  //DEVUELVE int con el estado de terminacion  
+				pid = esperar_a(pid);  //DEVUELVE int con el estado de terminacion
 			}else{ //en background
 				printf(" Ejecutando en background...: proceso %i \n", pid);
-					trabajos[numTrabajos] = pid; 
+					trabajos[numTrabajos] = pid;
 					numTrabajos++;
 			}
-			
-		}		
+
+		}
 	}
 
 	return pid;
@@ -349,62 +344,62 @@ static int invocar(int argc, char *argv[], int fd_ent, char *fichero_ent,
 }
 
 
-static void redirigir(int fd_ent, char *fichero_ent, int fd_sal, char *fichero_sal, 
+static void redirigir(int fd_ent, char *fichero_ent, int fd_sal, char *fichero_sal,
 		BOOL anexo, BOOL background) {
 	int fd;
 	char flags;
 
 	/* Redirigir la entrada y salida estandar, segun los argumentos */
 
-	if(fd_ent != 0) { 
-		flags = O_RDONLY;				
+	if(fd_ent != 0) {
+		flags = O_RDONLY;
 		if ((fd_ent = open(fichero_ent, flags, 0666)) == -1)
 			perror("Error redirigir(): Fallo al redirigir la entrada\n");
 		if (dup2(fd_ent, 0) == -1)
 			perror("Error redirigir(): Fallo al redirigir la entrada\n");
-		close(fd_ent);	
+		close(fd_ent);
 	}
 
-	if(fd_sal != 1) {		
+	if(fd_sal != 1) {
 		flags = 0;
 		if (!anexo){
 			flags = flags | O_CREAT | O_TRUNC;
 			flags = flags | O_RDWR;
 		}
-		else 
+		else
 			flags = flags | O_CREAT | O_APPEND | O_RDWR;
 		if ((fd_sal = open(fichero_sal, flags, 0666)) == -1)
 			perror("Error redirigir(): Fallo al redirigir la salida\n");
 		if (dup2(fd_sal, 1) == -1)
 			perror("Error redirigir(): Fallo al redirigir la salida\n");
-		close(fd_sal);	
+		close(fd_sal);
 	}
-	
 
-	
+
+
 }
 
 /**
  * Espera a un hijo dado, pero no se bloquea y sigue mandando informacion de la finalización
  * de los demás hijos que finalicen
- * 
- * @param  pid 		pid del hijo a esperar 
+ *
+ * @param  pid 		pid del hijo a esperar
  * @return         	status del hijo una vez ha acabado, 1 si error
  */
 static int esperar_a(int pid) {
 	int wpid, status;
 
 	/* Esperar a que finalice el proceso "pid"
-	   e informar del estado de terminacion de los que vayan acabando 
+	   e informar del estado de terminacion de los que vayan acabando
 	 */
-	
+
 	status = 0; 									// para que no sea NULL, y wait almacene informacion de terminacion del hijo en él
-	while((wpid = waitpid(pid,&status,0)) >= 0 ){	
-		mostrar_status(wpid,status);					
+	while((wpid = waitpid(pid,&status,0)) >= 0 ){
+		mostrar_status(wpid,status);
 		if (status == 0)
 			quitar_job(pid);
 	}
-	
+
 	return status;
 
 }
@@ -436,15 +431,15 @@ static BOOL internos(int argc, char *argv[], int fd_ent, int fd_sal) {
 	BOOL salida = TRUE;
 
 	if (strcmp(argv[0],"cd") == 0 ){ 			/* cd [dir] 			*/
-		if (argv[1] != NULL){					// se usa con argumentos: cambiamos a dir 
+		if (argv[1] != NULL){					// se usa con argumentos: cambiamos a dir
 			if (chdir(argv[1]) == -1)
 				perror("Error internos(): no existe el directorio");
-			else{ 
+			else{
 				char *curr_dir = NULL;
 				curr_dir = getcwd(curr_dir,0);  //getcwd hace malloc
 				EVasignar("PWD", curr_dir);
 				free(curr_dir);
-			}		
+			}
 		}
 		else { 									// se usa sin argumentos: se cambia al home
 			if (chdir(EVobtener("HOME")) == -1)
@@ -463,12 +458,12 @@ static BOOL internos(int argc, char *argv[], int fd_ent, int fd_sal) {
 		entorno(argc,argv);
 	}
 	else if (strcmp(argv[0],"exit") == 0 ){ 	/* exit [n] , n salida 	*/
-		if (argc = 1) exit(0); 		
-		else if (argc > 2) fprintf(stderr,"Uso: exit [int]\n");				
+		if (argc = 1) exit(0);
+		else if (argc > 2) fprintf(stderr,"Uso: exit [int]\n");
 		else exit( atoi(argv[1]) );
 	}
 	else if (strcmp(argv[0], "source") == 0) {	/* source ruta_fichero  */
-		if (argc == 2){ 
+		if (argc == 2){
 			if ( (fguion = fopen(argv[1], "r")) == NULL )
 				perror("Error comando \"source\" abriendo fichero-guión");
 			else{
@@ -476,7 +471,7 @@ static BOOL internos(int argc, char *argv[], int fd_ent, int fd_sal) {
 				fd_actual = pilaF[npilaF-1];
 			}
 		}
-		else fprintf(stderr,"Uso: source ruta_fichero\n");	
+		else fprintf(stderr,"Uso: source ruta_fichero\n");
 	}
 	else if (strcmp(argv[0], "jobs") == 0) {
 		if (argc == 1) {
@@ -486,7 +481,7 @@ static BOOL internos(int argc, char *argv[], int fd_ent, int fd_sal) {
 				printf("\tProceso %d\n", trabajos[i]);
 		}
 		else
-			fprintf(stderr,"Uso: jobs\n");	
+			fprintf(stderr,"Uso: jobs\n");
 	}
 	else salida = FALSE;						// no se ha reconocido el comando como interno
 

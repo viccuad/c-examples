@@ -11,47 +11,45 @@ extern int fin_solicitado;
  */
 void *alarma_thread (void *arg)
 {
-    alarma_t *alarma;
-    struct timespec cond_tiempo;
-    time_t ahora;
-    int estado, expirado;
+	alarma_t *alarma;
+	struct timespec cond_tiempo;
+	time_t ahora;
+	int estado, expirado;
 
 
-    /* 
-     * Bloquea (lock) el mutex
-     * al principio -- se desbloqueara (unlocked) durante las
-     * esperas de condicion, de modo que el thread principal
-     * podra insertar nuevas alarmas.
-     */
+	/*
+	 * Bloquea (lock) el mutex
+	 * al principio -- se desbloqueara (unlocked) durante las
+	 * esperas de condicion, de modo que el thread principal
+	 * podra insertar nuevas alarmas.
+	 */
 	if ((estado = pthread_mutex_lock(&alarma_mutex)) != 0)
 		err_abort(estado, "Lock hilo gestor\n");
 
-    /*
-     * Itera continuamente procesando solicitudes. El thread
-     * desaparecera cuando el proceso termine. 
-     */
-
-    while (1) {
-
+	/*
+	 * Itera continuamente procesando solicitudes. El thread
+	 * desaparecera cuando el proceso termine.
+	 */
+	while (1) {
 		if (fin_solicitado == 1 && alarma_lista == NULL) {
 			pthread_exit(NULL);
 		}
-		
-		/* 
+
+		/*
 		 * Si la lista de alarmas esta vacia, espera a que se inserte
-	 	 * una nueva. Al poner alarma_actual a 0 se informa a la rutina
-	 	 * alarma_inserta() que alarma_thread no esta ocupado.
-         */
+		 * una nueva. Al poner alarma_actual a 0 se informa a la rutina
+		 * alarma_inserta() que alarma_thread no esta ocupado.
+		 */
 		while (alarma_lista == NULL && fin_solicitado != 1) { // no hay alarmas y no se haya solicitado salir
 			alarma_actual = 0;
 			if ((estado = pthread_cond_wait(&alarma_cond, &alarma_mutex)) != 0) // asi que permite que thread ppal se ejecute
 				err_abort(estado, "Pthread_cond_wait hilo gestor\n");
 		}
 
-		/* 
-		 * Toma la primera alarma; 
-		 * Si hay que procesarla prepara una espera condicional con 
-		 * temporizacion de la que saldra 
+		/*
+		 * Toma la primera alarma;
+		 * Si hay que procesarla prepara una espera condicional con
+		 * temporizacion de la que saldra
 		 *   a) por tiempo expirado => informa de alarma cumplida
 		 *   b) por señal de nueva alarma mas corta => reinsertar en la lista
 		 */
@@ -83,7 +81,7 @@ void *alarma_thread (void *arg)
 						break;
 				}
 			}
-		
+
 			if (expirado == 1) {
 				printf("(%d) %s\n", alarma->segundos, alarma->mensaje);
 				free (alarma);
@@ -95,11 +93,11 @@ void *alarma_thread (void *arg)
 		 * que va a ser atendida
 		 */
 		#ifdef DEBUG
-				fprintf(stderr, "%d(%d)[\"%s\"] ", (int)alarma->tiempo,
-					(int)(alarma->tiempo - time(NULL)), alarma->mensaje);
-				fprintf (stderr, "\n");
+			fprintf(stderr, "%d(%d)[\"%s\"] ", (int)alarma->tiempo,
+				(int)(alarma->tiempo - time(NULL)), alarma->mensaje);
+			fprintf (stderr, "\n");
 		#endif
- 
-    }
+
+	}
 }
 
